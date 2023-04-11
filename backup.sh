@@ -8,26 +8,11 @@ date_now=$(date '+%Y-%m-%d')
 logdate=$(date '+%Y-%m-%d %H:%M')
 
 
-#basic spinner
-function display_spinner() {
-    local delay=0.1
-    local spinstr='|/-\'
-    while [ -n "$(ps a | awk '{print $1}' | grep $1)" ]; do
-        local temp=${spinstr#?}
-        printf " [%c] " "$spinstr"
-        local spinstr=$temp${spinstr%"$temp"}
-        sleep $delay
-        printf "\b\b\b\b\b\b"
-    done
-    printf "    \b\b\b\b"
-}
-
 function archiving_process() {
     echo "$logdate: Started archiving proxmox backups" >> $archivedir/scriptlog$date_now.log
-    display_spinner $$ &
+    
     cd $archivedir
     tar zcfP proxmoxbk${date_now}.tar $proxmox_backups/*
-    kill $! >/dev/null 2>&1
     echo "$logdate: Archieved!" >> scriptlog$date_now.log
 }
 
@@ -37,7 +22,7 @@ function gdrive_sync_yes() {
 }
 
 function delete_gdrive_backup() {  
-    display_spinner $$ &
+    
 
     rclone ls $rclone_instance/proxmox/ | grep -oE 'proxmoxbk.*\.tar' 2>/dev/null | while read -r tarfile ; do
     tarfile_date=$(echo "$tarfile" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
@@ -46,7 +31,6 @@ function delete_gdrive_backup() {
             
             echo "$logdate: Deleting previous backup and logs from Google Drive..." >> $archivedir/scriptlog$date_now.log
             rclone delete $rclone_instance/proxmox/$tarfile
-            kill $! >/dev/null 2>&1
             echo "$logdate: Deleted!" >> $archivedir/scriptlog$date_now.log
             
 
@@ -62,7 +46,7 @@ function delete_gdrive_backup() {
 }
 
 function clone_to_gdrive() {
-    display_spinner $$ &
+    
  
     if [ "$gdrive_sync" = false ] ; then
         echo "$logdate: Cloning archive to Google Drive..." >> $archivedir/scriptlog$date_now.log 
@@ -74,7 +58,6 @@ function clone_to_gdrive() {
 
     fi
 
-    kill $! >/dev/null 2>&1
 }
 
 function clone_logs() {
